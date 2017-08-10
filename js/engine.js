@@ -23,7 +23,8 @@ var Engine = (function(global) {
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        lastTime;
+        lastTime,
+        isReset = false;
 
     canvas.width = 505;
     canvas.height = 606;
@@ -80,7 +81,8 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        checkCollisions();
+        checkIfWin();
     }
 
     /* This is called by the update function and loops through all of the
@@ -97,6 +99,42 @@ var Engine = (function(global) {
         player.update();
     }
 
+    function checkCollisions() {
+      allEnemies.forEach(function(enemy) {
+        var isCollision = enemy.checkCollision();
+        if (isCollision) {
+          reset();
+        };
+      });
+    }
+
+    function checkIfWin() {
+      if (player.checkIfWin()) {
+        if (!isReset) {
+          isReset = true;
+          setTimeout(
+            function() {
+              reset();
+              isReset = false;
+            },
+            1500
+          );
+        }
+
+        player.setMovement(false);
+
+      }
+    }
+
+    function sleep(milliseconds) {
+      var start = new Date().getTime();
+      for (var i = 0; i < 1e7; i++) {
+        if ((new Date().getTime() - start) > milliseconds) {
+          break;
+        }
+      }
+    }
+
     /* This function initially draws the "game level", it will then call
      * the renderEntities function. Remember, this function is called every
      * game tick (or loop of the game engine) because that's how games work -
@@ -107,6 +145,9 @@ var Engine = (function(global) {
         /* This array holds the relative URL to the image used
          * for that particular row of the game level.
          */
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         var rowImages = [
                 'images/water-block.png',   // Top row is water
                 'images/stone-block.png',   // Row 1 of 3 of stone
@@ -137,6 +178,12 @@ var Engine = (function(global) {
         }
 
         renderEntities();
+
+        if (player.checkIfWin()) {
+          ctx.font = "120px Arial Black";
+          ctx.textAlign = "center";
+          ctx.fillText("Win!", canvas.width/2, canvas.height/2);
+        }
     }
 
     /* This function is called by the render function and is called on each game
@@ -159,7 +206,10 @@ var Engine = (function(global) {
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // noop
+      allEnemies.forEach(function(enemy) {
+        enemy.reset();
+      });
+      player.reset();
     }
 
     /* Go ahead and load all of the images we know we're going to need to
@@ -171,7 +221,11 @@ var Engine = (function(global) {
         'images/water-block.png',
         'images/grass-block.png',
         'images/enemy-bug.png',
-        'images/char-boy.png'
+        'images/char-boy.png',
+        'images/char-cat-girl.png',
+        'images/char-horn-girl.png',
+        'images/char-pink-girl.png',
+        'images/char-princess-girl.png'
     ]);
     Resources.onReady(init);
 
